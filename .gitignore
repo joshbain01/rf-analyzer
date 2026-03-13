@@ -2,11 +2,18 @@
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+*.so
 *.egg-info/
 dist/
 build/
 *.egg
 .eggs/
+.mypy_cache/
+.ruff_cache/
+.nox/
+.tox/
+.hypothesis/
 
 # Virtual environments
 venv/
@@ -34,6 +41,10 @@ Thumbs.db
 logs/
 analysis/
 *.png
+*.log
 
 # Deployed environment config (contains secrets/local settings)
 /etc/rf-monitor/
+
+# Local tooling
+.deepeval/
