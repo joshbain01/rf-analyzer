@@ -204,6 +204,50 @@ For radar warning receiver protection (e.g., VHF/UHF threats against AN/APR-39):
 
 ## Raspberry Pi Deployment
 
+### Containerized Deploy (Portable)
+
+For testing or portable deployments on Pi, you can run rf-monitor in Docker.
+
+Requirements on Pi:
+- Docker Engine + Compose plugin installed
+- RTL-SDR USB dongle connected
+
+Quick start:
+
+```bash
+# On the Pi, in the rf-monitor repo directory
+mkdir -p config logs
+
+# Generate an initial config file persisted on host volume
+docker compose -f docker-compose.pi.yml run --rm rf-monitor config init -o /config/config.json
+
+# (Optional) Edit config/config.json for your frequency range and interval
+
+# Start continuous monitoring container
+docker compose -f docker-compose.pi.yml up -d --build
+
+# Check logs
+docker compose -f docker-compose.pi.yml logs -f rf-monitor
+
+# Run a one-off scan test
+docker compose -f docker-compose.pi.yml run --rm rf-monitor scan -v
+```
+
+Notes:
+- The compose file uses `privileged: true` for simplest USB pass-through while testing on Pi.
+- Scan CSV output is persisted to `./logs` on the host.
+- Config is persisted in `./config/config.json` on the host.
+
+Makefile shortcuts:
+
+```bash
+make docker-build
+make docker-up
+make docker-logs
+make docker-scan
+make docker-down
+```
+
 ### One-Command Deploy
 
 From your development machine, deploy directly to a Pi over SSH:

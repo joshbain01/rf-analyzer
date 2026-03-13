@@ -1,0 +1,23 @@
+services:
+  rf-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rf-monitor:pi-local
+    container_name: rf-monitor
+    restart: unless-stopped
+
+    # Simplest path for USB SDR access while testing on a Pi.
+    privileged: true
+    device_cgroup_rules:
+      - "c 189:* rmw"
+
+    environment:
+      RF_MONITOR_CONFIG: /config/config.json
+      RF_MONITOR_OUTPUT_DIR: /data/logs
+
+    volumes:
+      - ./config:/config
+      - ./logs:/data/logs
+
+    command: ["monitor"]

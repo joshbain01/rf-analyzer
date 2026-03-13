@@ -10,7 +10,7 @@
 #   make deploy PI=pi@192.168.1.100   Deploy to Pi
 #   make clean           Remove build artifacts
 
-.PHONY: help install-dev test lint build deploy clean
+.PHONY: help install-dev test lint build deploy deploy-sync docker-build docker-up docker-down docker-logs docker-scan clean
 
 SHELL := /bin/bash
 PYTHON := python3
@@ -57,6 +57,21 @@ deploy: ## Deploy to Raspberry Pi (PI=user@host)
 
 deploy-sync: ## Sync files to Pi without running install (PI=user@host)
 	bash deploy/deploy.sh $(PI) --sync-only
+
+docker-build: ## Build the Pi container image locally
+	docker compose -f docker-compose.pi.yml build
+
+docker-up: ## Start rf-monitor container on Pi/local host
+	docker compose -f docker-compose.pi.yml up -d --build
+
+docker-down: ## Stop and remove rf-monitor container
+	docker compose -f docker-compose.pi.yml down
+
+docker-logs: ## Tail rf-monitor container logs
+	docker compose -f docker-compose.pi.yml logs -f rf-monitor
+
+docker-scan: ## Run a one-off scan in the container
+	docker compose -f docker-compose.pi.yml run --rm rf-monitor scan -v
 
 # ---------------------------------------------------------------------------
 # Service Management (run on Pi via SSH)
