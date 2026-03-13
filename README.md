@@ -218,11 +218,6 @@ Quick start:
 # On the Pi, in the rf-monitor repo directory
 mkdir -p config logs
 
-# Generate an initial config file persisted on host volume
-docker compose -f docker-compose.pi.yml run --rm rf-monitor config init -o /config/config.json
-
-# (Optional) Edit config/config.json for your frequency range and interval
-
 # Start continuous monitoring container
 docker compose -f docker-compose.pi.yml up -d --build
 
@@ -234,6 +229,8 @@ docker compose -f docker-compose.pi.yml run --rm rf-monitor scan -v
 ```
 
 Notes:
+- The Docker image includes balanced defaults via `RF_MONITOR_*` environment variables, so config file generation is optional.
+- To customize behavior per deployment, set environment variables in `docker-compose.pi.yml` or create `/config/config.json`.
 - The compose file uses `privileged: true` for simplest USB pass-through while testing on Pi.
 - Scan CSV output is persisted to `./logs` on the host.
 - Config is persisted in `./config/config.json` on the host.
@@ -254,10 +251,16 @@ From your development machine, deploy directly to a Pi over SSH:
 
 ```bash
 # Deploy and install (rsync + remote install.sh)
-make deploy PI=pi@192.168.1.100
+make deploy PI=pi@<pi-host>
+
+# Deploy with a predefined config profile
+make deploy PI=pi@<pi-host> PROFILE=wideband
 
 # Or using the script directly
-bash deploy/deploy.sh pi@192.168.1.100
+bash deploy/deploy.sh pi@<pi-host>
+
+# Script form with explicit profile
+bash deploy/deploy.sh pi@<pi-host> --profile high-sensitivity
 ```
 
 This will:
@@ -272,7 +275,7 @@ This will:
 
 ### Prerequisites for Deploy
 
-- SSH key auth to the Pi: `ssh-copy-id pi@192.168.1.100`
+- SSH key auth to the Pi: `ssh-copy-id pi@<pi-host>`
 - `rsync` installed on dev machine
 - Pi running Raspberry Pi OS (Debian/Ubuntu-based)
 
@@ -280,11 +283,11 @@ This will:
 
 ```bash
 # From your dev machine via Makefile:
-make pi-start   PI=pi@192.168.1.100
-make pi-stop    PI=pi@192.168.1.100
-make pi-status  PI=pi@192.168.1.100
-make pi-logs    PI=pi@192.168.1.100    # live tail
-make pi-scan    PI=pi@192.168.1.100    # one-off test scan
+make pi-start   PI=pi@<pi-host>
+make pi-stop    PI=pi@<pi-host>
+make pi-status  PI=pi@<pi-host>
+make pi-logs    PI=pi@<pi-host>    # live tail
+make pi-scan    PI=pi@<pi-host>    # one-off test scan
 
 # Or directly on the Pi:
 sudo systemctl start rf-monitor
@@ -295,7 +298,24 @@ sudo journalctl -u rf-monitor -f
 
 ### Configuring the Deployment
 
-Edit `/etc/rf-monitor/env` on the Pi to set environment variable overrides:
+rf-monitor now supports deploy-time profiles to avoid hand-tuning every new Pi.
+
+Available built-in profiles:
+- `balanced` (default): good baseline for general VHF/UHF monitoring
+- `wideband`: broader sweep coverage with lower time resolution
+- `high-sensitivity`: narrower range with longer dwell for weak-signal detection
+
+Useful profile commands:
+
+```bash
+# List available profiles on the Pi
+sudo bash /opt/rf-monitor/src/deploy/install.sh --list-profiles
+
+# Reinstall using a profile (non-destructive to existing /etc/rf-monitor/env)
+sudo bash /opt/rf-monitor/src/deploy/install.sh --profile balanced
+```
+
+For site-specific tuning, edit `/etc/rf-monitor/env` on the Pi:
 
 ```bash
 RF_MONITOR_FREQ_START=100M
@@ -346,13 +366,16 @@ This stops the service, removes the venv and systemd unit, but preserves logs an
 Re-run the deploy to sync new code and reinstall:
 
 ```bash
-make deploy PI=pi@192.168.1.100
+make deploy PI=pi@<pi-host>
+
+# Or pick a different rollout profile
+make deploy PI=pi@<pi-host> PROFILE=high-sensitivity
 ```
 
 The install script rebuilds the venv each time. To sync code without reinstalling (e.g., for config-only changes):
 
 ```bash
-make deploy-sync PI=pi@192.168.1.100
+make deploy-sync PI=pi@<pi-host>
 ```
 
 ## Raspberry Pi Optimization

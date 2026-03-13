@@ -7,6 +7,8 @@
 # Usage:
 #   sudo bash install.sh          # Full install (app + systemd + udev)
 #   sudo bash install.sh --app    # App only (venv + pip install)
+#   sudo bash install.sh --profile wideband
+#   sudo bash install.sh --list-profiles
 #   sudo bash install.sh --uninstall
 
 set -euo pipefail
@@ -21,6 +23,7 @@ SCAN_DIR="${LOG_DIR}/scans"
 CONFIG_DIR="/etc/rf-monitor"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(dirname "${SCRIPT_DIR}")"
+PROFILES_DIR="${REPO_DIR}/deploy/profiles"
 
 # --------------------------------------------------------------------------
 # Helpers
@@ -30,6 +33,27 @@ info()  { echo -e "\033[1;34m[INFO]\033[0m  $*"; }
 ok()    { echo -e "\033[1;32m[OK]\033[0m    $*"; }
 warn()  { echo -e "\033[1;33m[WARN]\033[0m  $*"; }
 err()   { echo -e "\033[1;31m[ERROR]\033[0m $*" >&2; }
+
+usage() {
+    echo "Usage: $0 [--app|--uninstall] [--profile <name>] [--list-profiles]"
+    echo ""
+    echo "Options:"
+    echo "  --profile <name>   Use env profile from deploy/profiles/<name>.env (default: balanced)"
+    echo "  --list-profiles    List available env profiles and exit"
+    echo "  --app              Install/update app only (no service/udev changes)"
+    echo "  --uninstall        Remove rf-monitor service and application"
+}
+
+list_profiles() {
+    if [[ ! -d "${PROFILES_DIR}" ]]; then
+        err "Profiles directory not found: ${PROFILES_DIR}"
+        exit 1
+    fi
+    info "Available deployment profiles:"
+    find "${PROFILES_DIR}" -maxdepth 1 -type f -name '*.env' -print \
+        | sed -E 's|.*/([^/]+)\.env$|  - \1|' \
+        | sort
+}
 
 require_root() {
     if [[ $EUID -ne 0 ]]; then
@@ -170,15 +194,21 @@ install_logrotate() {
 # --------------------------------------------------------------------------
 
 install_env_config() {
+    local profile_name="${1:-balanced}"
     local env_dst="${CONFIG_DIR}/env"
-    local env_src="${REPO_DIR}/deploy/env.example"
+    local env_src="${PROFILES_DIR}/${profile_name}.env"
+
+    if [[ ! -f "${env_src}" ]]; then
+        err "Unknown profile '${profile_name}'."
+        list_profiles
+        exit 1
+    fi
 
     if [[ ! -f "${env_dst}" ]]; then
-        if [[ -f "${env_src}" ]]; then
-            info "Installing default environment config..."
-            cp "${env_src}" "${env_dst}"
-            ok "Environment config installed at ${env_dst}. Edit to customize."
-        fi
+        info "Installing environment profile '${profile_name}'..."
+        cp "${env_src}" "${env_dst}"
+        ok "Environment config installed at ${env_dst} from profile '${profile_name}'."
+        ok "For site-specific overrides, edit ${env_dst} after install."
     else
         ok "Environment config already exists at ${env_dst}, not overwriting."
     fi
@@ -249,7 +279,48 @@ uninstall() {
 # --------------------------------------------------------------------------
 
 main() {
-    local mode="${1:-full}"
+    local mode="full"
+    local profile="balanced"
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --uninstall)
+                mode="--uninstall"
+                shift
+                ;;
+            --app)
+                mode="--app"
+                shift
+                ;;
+            --profile)
+                if [[ $# -lt 2 ]]; then
+                    err "--profile requires a value"
+                    usage
+                    exit 1
+                fi
+                profile="$2"
+                shift 2
+                ;;
+            --list-profiles)
+                list_profiles
+                exit 0
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                err "Unknown argument: $1"
+                usage
+                exit 1
+                ;;
+        esac
+    done
+
+    if [[ ! "${profile}" =~ ^[A-Za-z0-9._-]+$ ]]; then
+        err "Invalid profile '${profile}'. Use letters, digits, dot, dash, or underscore."
+        exit 1
+    fi
 
     case "${mode}" in
         --uninstall)
@@ -275,7 +346,7 @@ main() {
             install_app
             install_udev_rules
             install_logrotate
-            install_env_config
+            install_env_config "${profile}"
             install_service
 
             echo ""
@@ -284,7 +355,7 @@ main() {
             echo "============================================"
             echo ""
             info "Next steps:"
-            info "  1. Edit /etc/rf-monitor/env to set your frequency range and thresholds"
+            info "  1. Verify /etc/rf-monitor/env values for this deployment"
             info "  2. Plug in your RTL-SDR USB dongle"
             info "  3. Test manually:  sudo -u rf-monitor ${VENV_DIR}/bin/rf-monitor scan -v"
             info "  4. Start service:  sudo systemctl start rf-monitor"

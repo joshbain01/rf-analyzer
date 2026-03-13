@@ -12,6 +12,7 @@ services:
     device_cgroup_rules:
       - "c 189:* rmw"
 
+    # Optional per-deployment overrides (image already ships balanced defaults).
     environment:
       RF_MONITOR_CONFIG: /config/config.json
       RF_MONITOR_OUTPUT_DIR: /data/logs

@@ -7,7 +7,7 @@
 #   make test            Run pytest suite
 #   make lint            Check code style
 #   make build           Build wheel distribution
-#   make deploy PI=pi@192.168.1.100   Deploy to Pi
+#   make deploy PI=pi@<pi-host>       Deploy to Pi
 #   make clean           Remove build artifacts
 
 .PHONY: help install-dev test lint build deploy deploy-sync docker-build docker-up docker-down docker-logs docker-scan clean
@@ -16,6 +16,7 @@ SHELL := /bin/bash
 PYTHON := python3
 PIP := pip
 PI ?= pi@raspberrypi.local
+PROFILE ?= balanced
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -53,7 +54,7 @@ build: clean ## Build wheel and sdist distributions
 
 deploy: ## Deploy to Raspberry Pi (PI=user@host)
 	@echo "Deploying to $(PI)..."
-	bash deploy/deploy.sh $(PI)
+	bash deploy/deploy.sh $(PI) --profile $(PROFILE)
 
 deploy-sync: ## Sync files to Pi without running install (PI=user@host)
 	bash deploy/deploy.sh $(PI) --sync-only
