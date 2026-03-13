@@ -1,0 +1,6 @@
+# rf-monitor dependencies
+click>=8.0
+pydantic>=2.0
+pandas>=1.5
+matplotlib>=3.5
+numpy>=1.21

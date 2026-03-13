@@ -1,0 +1,45 @@
+{
+  "// NOTICE": "RF COMPLIANCE: This tool is for authorized educational and diagnostic use only. Comply with all local RF regulations (e.g., FCC Part 15 in the US). Receiving signals you are not authorized to monitor may violate laws in your jurisdiction.",
+
+  "// freq_start": "Start frequency. RTL-SDR native range: 500kHz - 1.75GHz. Use upconverter for higher bands (S-band, X-band).",
+  "freq_start": "100M",
+
+  "// freq_end": "End frequency. Keep range narrow on Raspberry Pi for faster scans.",
+  "freq_end": "900M",
+
+  "// bin_size": "Frequency resolution per bin. Smaller values = more detail, slower scans.",
+  "bin_size": "10k",
+
+  "// integration_time": "Integration time per hop. Longer = better sensitivity but slower.",
+  "integration_time": "0.4s",
+
+  "// gain": "RTL-SDR tuner gain in dB (0-50). 0 = automatic gain control. 40-50 typical for weak signals.",
+  "gain": 50,
+
+  "// output_dir": "Directory for scan CSV output files. Created automatically.",
+  "output_dir": "./logs",
+
+  "// interval": "Seconds between scans in monitor mode. Minimum 5s. Must exceed estimated scan time.",
+  "interval": 30,
+
+  "// max_log_age": "Auto-delete log files older than N days. Set to 0 to disable log rotation.",
+  "max_log_age": 7,
+
+  "// alert_threshold": "Power level in dBm above which an anomaly alert is triggered. Typical noise floor: -70 to -90 dBm.",
+  "alert_threshold": -50.0,
+
+  "// hop_bandwidth": "Estimated RTL-SDR bandwidth per frequency hop, used for scan time estimation.",
+  "hop_bandwidth": "2.4M",
+
+  "// duty_cycle_limit": "Maximum ratio of scan_time/interval before warning. Prevents hardware overheating.",
+  "duty_cycle_limit": 0.5,
+
+  "// upconverter_offset": "Local oscillator offset for upconverters (e.g., '125M' for Ham-It-Up). Set to '0' if not using one.",
+  "upconverter_offset": "0",
+
+  "// baseline_file": "Path to a baseline CSV scan for comparative anomaly detection. Empty if unused.",
+  "baseline_file": "",
+
+  "// duration": "Maximum duration for monitor mode (e.g., '1h', '30m'). Empty string for indefinite monitoring.",
+  "duration": ""
+}

@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "rf-monitor"
+version = "1.0.0"
+description = "RF spectrum monitoring and jamming detection using RTL-SDR"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+authors = [
+    {name = "RF Monitor Contributors"},
+]
+keywords = ["rtl-sdr", "rf", "spectrum", "monitoring", "jamming", "detection", "radar"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: System :: Monitoring",
+]
+dependencies = [
+    "click>=8.0",
+    "pydantic>=2.0",
+    "pandas>=1.5",
+    "matplotlib>=3.5",
+    "numpy>=1.21",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+
+[project.scripts]
+rf-monitor = "rf_monitor.cli:main"
+
+[project.entry-points."rf_monitor.analyzers"]
+[project.entry-points."rf_monitor.alert_handlers"]
+
+[tool.setuptools.packages.find]
+exclude = ["tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"

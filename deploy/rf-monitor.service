@@ -1,0 +1,47 @@
+[Unit]
+Description=RF Spectrum Monitor (rf-monitor)
+Documentation=https://github.com/example/rf-monitor
+After=network.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=rf-monitor
+Group=rf-monitor
+WorkingDirectory=/opt/rf-monitor
+
+# Use the venv Python to run the installed entry point
+ExecStart=/opt/rf-monitor/venv/bin/rf-monitor monitor --verbose
+ExecStop=/bin/kill -SIGINT $MAINPID
+
+# Graceful shutdown: SIGINT triggers the built-in handler, then SIGTERM after 30s
+KillSignal=SIGINT
+TimeoutStopSec=30
+KillMode=mixed
+
+# Restart policy
+Restart=on-failure
+RestartSec=10
+
+# Environment
+Environment="RF_MONITOR_OUTPUT_DIR=/var/log/rf-monitor/scans"
+EnvironmentFile=-/etc/rf-monitor/env
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/log/rf-monitor
+PrivateTmp=yes
+
+# RTL-SDR USB device access (requires plugdev or udev rule)
+SupplementaryGroups=plugdev
+
+# Logging to journald
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rf-monitor
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,29 @@
+# Logrotate configuration for rf-monitor
+# Install: sudo cp deploy/rf-monitor.logrotate /etc/logrotate.d/rf-monitor
+#
+# Handles system-level rotation of scan CSV data and any stdout logs.
+# This complements rf-monitor's built-in --max-log-age rotation.
+
+/var/log/rf-monitor/scans/*.csv {
+    daily
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 rf-monitor rf-monitor
+    sharedscripts
+    postrotate
+        # No signal needed; rf-monitor creates new timestamped files each scan
+    endscript
+}
+
+/var/log/rf-monitor/*.log {
+    weekly
+    rotate 4
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0644 rf-monitor rf-monitor
+}
