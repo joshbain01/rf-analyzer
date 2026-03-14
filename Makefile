@@ -1,29 +1,15 @@
 # rf-monitor Makefile
-# Common tasks for development, testing, and Raspberry Pi deployment.
-#
-# Usage:
-#   make help            Show all targets
-#   make install-dev     Install locally in editable mode with dev deps
-#   make test            Run pytest suite
-#   make lint            Check code style
-#   make build           Build wheel distribution
-#   make deploy PI=pi@192.168.1.100   Deploy to Pi
-#   make clean           Remove build artifacts
+# Common tasks for development, testing, and container operations.
 
-.PHONY: help install-dev test lint build deploy clean
+.PHONY: help install-dev test test-cov lint typecheck build docker-build docker-up docker-down docker-logs docker-restart clean
 
 SHELL := /bin/bash
 PYTHON := python3
 PIP := pip
-PI ?= pi@raspberrypi.local
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
-
-# ---------------------------------------------------------------------------
-# Development
-# ---------------------------------------------------------------------------
 
 install-dev: ## Install in editable mode with dev dependencies
 	$(PIP) install -e ".[dev]"
@@ -40,49 +26,23 @@ lint: ## Check code with flake8 (install separately: pip install flake8)
 typecheck: ## Run mypy type checking (install separately: pip install mypy)
 	$(PYTHON) -m mypy rf_monitor/ --ignore-missing-imports
 
-# ---------------------------------------------------------------------------
-# Build
-# ---------------------------------------------------------------------------
-
 build: clean ## Build wheel and sdist distributions
 	$(PYTHON) -m build
 
-# ---------------------------------------------------------------------------
-# Deployment
-# ---------------------------------------------------------------------------
+docker-build: ## Build the runtime image
+	docker compose build
 
-deploy: ## Deploy to Raspberry Pi (PI=user@host)
-	@echo "Deploying to $(PI)..."
-	bash deploy/deploy.sh $(PI)
+docker-up: ## Start rf-monitor via Docker Compose
+	docker compose up -d
 
-deploy-sync: ## Sync files to Pi without running install (PI=user@host)
-	bash deploy/deploy.sh $(PI) --sync-only
+docker-down: ## Stop rf-monitor and remove containers
+	docker compose down
 
-# ---------------------------------------------------------------------------
-# Service Management (run on Pi via SSH)
-# ---------------------------------------------------------------------------
+docker-logs: ## Tail container logs
+	docker compose logs -f
 
-pi-start: ## Start rf-monitor service on Pi (PI=user@host)
-	ssh $(PI) "sudo systemctl start rf-monitor"
-
-pi-stop: ## Stop rf-monitor service on Pi (PI=user@host)
-	ssh $(PI) "sudo systemctl stop rf-monitor"
-
-pi-restart: ## Restart rf-monitor service on Pi (PI=user@host)
-	ssh $(PI) "sudo systemctl restart rf-monitor"
-
-pi-status: ## Show rf-monitor service status on Pi (PI=user@host)
-	ssh $(PI) "sudo systemctl status rf-monitor"
-
-pi-logs: ## Tail rf-monitor service logs on Pi (PI=user@host)
-	ssh -t $(PI) "sudo journalctl -u rf-monitor -f"
-
-pi-scan: ## Run a one-off scan on Pi (PI=user@host)
-	ssh -t $(PI) "sudo -u rf-monitor /opt/rf-monitor/venv/bin/rf-monitor scan -v"
-
-# ---------------------------------------------------------------------------
-# Cleanup
-# ---------------------------------------------------------------------------
+docker-restart: ## Restart rf-monitor service
+	docker compose restart
 
 clean: ## Remove build artifacts, caches, and egg-info
 	rm -rf build/ dist/ *.egg-info rf_monitor.egg-info/

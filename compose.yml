@@ -1,0 +1,27 @@
+services:
+  rf-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: rf-monitor:latest
+    container_name: rf-monitor
+    restart: unless-stopped
+    environment:
+      RF_MONITOR_OUTPUT_DIR: /data/scans
+      RF_MONITOR_FREQ_START: ${RF_MONITOR_FREQ_START:-100M}
+      RF_MONITOR_FREQ_END: ${RF_MONITOR_FREQ_END:-900M}
+      RF_MONITOR_BIN_SIZE: ${RF_MONITOR_BIN_SIZE:-10k}
+      RF_MONITOR_INTEGRATION_TIME: ${RF_MONITOR_INTEGRATION_TIME:-0.4s}
+      RF_MONITOR_GAIN: ${RF_MONITOR_GAIN:-50}
+      RF_MONITOR_INTERVAL: ${RF_MONITOR_INTERVAL:-30}
+      RF_MONITOR_ALERT_THRESHOLD: ${RF_MONITOR_ALERT_THRESHOLD:--50}
+      RF_MONITOR_MAX_LOG_AGE: ${RF_MONITOR_MAX_LOG_AGE:-7}
+      RF_MONITOR_DURATION: ${RF_MONITOR_DURATION:-}
+    command: ["monitor"]
+    volumes:
+      - ./data/scans:/data/scans
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
+    group_add:
+      - "plugdev"
+    tty: true

@@ -37,3 +37,6 @@ analysis/
 
 # Deployed environment config (contains secrets/local settings)
 /etc/rf-monitor/
+
+# Container runtime data
+data/
